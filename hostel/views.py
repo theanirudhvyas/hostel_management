@@ -6,9 +6,9 @@ from django.views import generic
 from django.contrib.auth.decorators import login_required
 from hostel.forms import UserForm, DiffForm, StudentForm
 
-#@login_required
+@login_required
 def index(request):
-    return HttpResponse("Hello, main page!!")
+    return render(request, 'hostel/index.html', {})
 
 # Create your views here.
 def register(request):

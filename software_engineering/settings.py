@@ -103,6 +103,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_PROFILE_MODULE = "hostel.diff"
 
+LOGIN_URL = '/hostel/login/'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
 
