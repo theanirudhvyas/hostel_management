@@ -11,10 +11,19 @@ class Diff(models.Model):
     def __str__(self):
         return str(self.user)
 
+
+class Room(models.Model):
+    room_no = models.IntegerField(primary_key = True, unique = True)
+    block_id = models.IntegerField(default=0)
+    capacity = models.IntegerField(default=4)
+    vacancy = models.IntegerField(default=0)
+    def __str__(self):
+        return str(self.room_no)
+
 class Student(models.Model):
 
     join_year = models.IntegerField(default=0)
-    room_no = models.IntegerField(default=0)
+    room = models.ForeignKey(Room,on_delete=models.CASCADE)
     gender = models.CharField(max_length = 1)
     age = models.IntegerField(default=0)
     branch = models.CharField(max_length = 50)
@@ -26,8 +35,3 @@ class Student(models.Model):
         return str(self.roll_no)
 
 
-class Room(models.Model):
-    room_id = models.IntegerField(primary_key = True, unique = True)
-    block_id = models.IntegerField(default=0)
-    capacity = models.IntegerField(default=4)
-    vacancy = models.IntegerField(default=0)
