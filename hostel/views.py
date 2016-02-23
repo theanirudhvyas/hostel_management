@@ -5,10 +5,12 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.contrib.auth.decorators import login_required
 from hostel.forms import UserForm, DiffForm, StudentForm
+from hostel.models import Diff
 
 @login_required
 def index(request):
-    return render(request, 'hostel/index.html', {})
+    diff = Diff.objects.get(user = request.user)
+    return render(request, 'hostel/index.html', {'diff': diff, })
 
 # Create your views here.
 def register(request):
