@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.contrib.auth.decorators import login_required
 from hostel.forms import UserForm, DiffForm, StudentForm
-from hostel.models import Diff
+from hostel.models import Diff,Student,Room
 
 @login_required
 def index(request):
@@ -110,3 +110,11 @@ def user_login(request):
         # No context variables to pass to the template system, hence the
         # blank dictionary object...
         return render(request,'hostel/login.html', {})
+
+@login_required
+def student_details(request):
+    student = Student.objects.get(roll_no = request.user)
+    room = Room.objects.get(room_no = student.room.room_no)
+    return render(request, 'hostel/student_details.html', {'student': student,'room': room, })
+
+

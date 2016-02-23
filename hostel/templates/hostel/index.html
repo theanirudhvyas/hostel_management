@@ -5,6 +5,7 @@
 {% if user.is_authenticated %}
 {% if diff.is_student %}
 <h1>hello {{ user.username }}! , STUDENT</h1>
+<a href = "student_details.html" >View Details</a>
 {% else %}
 <h1>hello {{diff.user}}! , ADMIN </h1>
 {% endif %}
