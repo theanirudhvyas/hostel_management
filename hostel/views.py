@@ -115,6 +115,6 @@ def user_login(request):
 def student_details(request):
     student = Student.objects.get(roll_no = request.user)
     room = Room.objects.get(room_no = student.room.room_no)
-    return render(request, 'hostel/student_details.html', {'student': student,'room': room, })
+    return render(request, 'hostel/student_details.html', {'student': student,'room1': room, })
 
 
