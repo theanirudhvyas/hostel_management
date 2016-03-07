@@ -34,4 +34,18 @@ class Student(models.Model):
     def __str__(self):
         return str(self.roll_no)
 
+class Change(models.Model):
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    reason = models.CharField(max_length = 300)
+
+class Swap(models.Model):
+
+    student1 = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student2 = models.CharField(max_length = 50)
+    reason = models.CharField(max_length=300)
+    accept = models.BooleanField(default=False)
+
+
+
 

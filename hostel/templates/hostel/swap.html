@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Swap Rooms</title>
+</head>
+<body>
+<h1>Swap!</h1>
+ <form id="swap_form" method="post" action="/hostel/swap/">
+            {% csrf_token %}
+{% for req in requests %}
+    {% if req.accept %}
+        <h2>{{  req.student1.roll_no.username }}</h2>
+        <h2>{{   req.student2 }}</h2>
+        <p> <b>REASON:</b> {{ req.reason }}</p>
+        <input type="submit" value="accept" name="_accept">
+        <input type="submit" value="decline" name="_decline">
+        <br />
+
+    {% endif %}
+{% endfor %}
+ </form>
+</body>
+</html>

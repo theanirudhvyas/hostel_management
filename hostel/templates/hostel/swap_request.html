@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Swap_request</title>
+</head>
+<body>
+<h1>Swap Request!</h1>
+
+        <form id="swap_req_form" method="post" action="/hostel/swap_req/">
+            {% csrf_token %}
+            Student2: <input type="text" name="stud2" value="" size="50" />
+            <br />
+            reason: <input type="'text" name="reason" value="" size="300" />
+            <br />
+            Are you sure: <input type="checkbox" name="flag" />
+            <br />
+
+            <input type="submit" value="submit" />
+        </form>
+
+
+</body>
+</html>

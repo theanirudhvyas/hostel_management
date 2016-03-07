@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Change!</title>
+</head>
+<body>
+
+<h1>Change!</h1>
+
+        <form id="change_form" method="post" action="/hostel/change/">
+            {% csrf_token %}
+            Roll_no: <input type="text" name="roll_no" value="" size="50" />
+            <br />
+            Room_no: <input type="number" name="room_no" value="" size="50" />
+            <br />
+
+            <input type="submit" value="submit" />
+        </form>
+
+
+</body>
+</html>
