@@ -5,6 +5,7 @@
     <title>Acknowledge a swap</title>
 </head>
 <body>
+{% if not request == None %}
 <form id="swap_ack" method="post" action="/hostel/swap_ack/">
             {% csrf_token %}
         <p>{{ request.student1.roll_no.username }} wants to swap rooms with you</p>
@@ -12,7 +13,7 @@
         <input type="submit" value="accept" name="_accept">
         <input type="submit" value="decline" name="_decline">
         <br />
-
+{% endif %}
 
  </form>
 

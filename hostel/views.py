@@ -293,8 +293,10 @@ def swap(request):
 def swap_ack(request):
     #works for only one swap request, have to make it work for more or have different pages for all requests
 
-    req = Swap.objects.get(student2=request.user.username)
-
+    try:
+        req = Swap.objects.get(student2=request.user.username)
+    except Swap.DoesNotExist:
+        req=None
     if request.method == 'POST':
 
         if '_accept' in request.POST:
