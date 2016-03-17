@@ -1,12 +1,16 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect, render_to_response
 from django.http import HttpResponse, Http404, HttpResponseRedirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
 from django.views import generic
 from django.contrib.auth.decorators import login_required
 from hostel.forms import UserForm, DiffForm, StudentForm, RoomForm
 from hostel.models import Diff, Student, Room, Change, Swap
 from django.contrib.auth.models import User
+from django.template import RequestContext
+import csv, os
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 
 @login_required
 def index(request):
@@ -74,6 +78,11 @@ def register(request):
             {'user_form': user_form, 'diff_form': diff_form, 'student_form': student_form, 'registered': registered})
 
 
+def logout1(request):
+    logout(request)
+    return redirect('/hostel/login/')
+
+
 def user_login(request):
 
     # If the request is a HTTP POST, try to pull out the relevant information.
@@ -102,7 +111,9 @@ def user_login(request):
                 return HttpResponse("Your account is disabled.")
         else:
             # Bad login details were provided. So we can't log the user in.
+
             print "Invalid login details: {0}, {1}".format(username, password)
+            messages.add_message(request, messages.ERROR, 'Invalid Password or Username. Try again!')
             return HttpResponseRedirect("/hostel/login")
 
     # The request is not a HTTP POST, so display the login form.
@@ -116,9 +127,10 @@ def user_login(request):
 def student_details(request):
     student = Student.objects.get(roll_no = request.user)
     room = Room.objects.get(room_no = student.room.room_no)
-    return render(request, 'hostel/student_details.html', {'student': student,'room1': room, })
+    students = Student.objects.filter(room=student.room.room_no)
+    return render(request, 'hostel/student_details.html', {'student': student,'room1': room,'students':students })
 
-
+@login_required
 def allocate(request):
 
     if request.method == 'POST':
@@ -126,29 +138,34 @@ def allocate(request):
         roll_no = request.POST['roll_no']
         room_no = request.POST['room_no']
 
-        student_roll_no = User.objects.get(username=roll_no)
+        try:
+            student_roll_no = User.objects.get(username=roll_no)
+            student = Student.objects.get(roll_no=student_roll_no)
+            room_new = Room.objects.get(room_no=room_no)
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR, 'Check the Details again!')
+            return render(request, 'hostel/student_allocate.html', {})
 
-        student = Student.objects.get(roll_no=student_roll_no)
-
-        #try:
-        room_new = Room.objects.get(room_no=room_no)
        # except:
         #    HttpResponse('Room does not exist! Try some Valid entry.')
 # Add exception condition for case where room does not exist
-        if room_new.vacancy:
-            student.room = room_new
-            room_new.vacancy -= 1
-            student.save()
-            room_new.save()
-            return HttpResponseRedirect('/hostel/')
+        if room_new is not None and student.room is not None:
+            if room_new.vacancy:
+                student.room = room_new
+                room_new.vacancy -= 1
+                student.save()
+                room_new.save()
+                return HttpResponseRedirect('/hostel/')
+            else:
+                html = "<html><body>Sorry, The room is Full.</body></html>"
+                return HttpResponse(html)
         else:
-            html = "<html><body>Sorry, The room is Full.</body></html>"
-            HttpResponse(html)
+            return HttpResponseRedirect('/hostel/')
 
     else:
         return render(request, 'hostel/student_allocate.html', {})
 
-
+@login_required
 def swap(request):
 
     if request.method == 'POST':
@@ -185,37 +202,47 @@ def swap(request):
 
 def change(request):
 
+
+
     if request.method == 'POST':
 
         roll_no = request.POST['roll_no']
 
         room_no = request.POST['room_no']
 
-        user = User.objects.get(username=roll_no)
-        student = Student.objects.get(roll_no=user)
+        try:
+            user = User.objects.get(username=roll_no)
+            student = Student.objects.get(roll_no=user)
+            room_new = Room.objects.get(room_no=room_no)
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR, 'Check the Details again!')
+            return render(request, 'hostel/change.html', {})
 
-        room_new = Room.objects.get(room_no=room_no)
+
+
 
        # room_old = Student.room
-
-        if room_new.vacancy:
-            student.room.vacancy += 1
-            student.room = room_new
-            room_new.vacancy -= 1
-            student.room.save()
-            student.save()
-            room_new.save()
-            #room_old.save()
-            return HttpResponseRedirect('/hostel/')
+        if room_new is not None and student.room is not None:
+            if room_new.vacancy:
+                student.room.vacancy += 1
+                student.room = room_new
+                room_new.vacancy -= 1
+                student.room.save()
+                student.save()
+                room_new.save()
+                #room_old.save()
+                return HttpResponseRedirect('/hostel/')
+            else:
+                html = "<html><body>Sorry, The new room is Full.</body></html>"
+                return render(request, 'hostel/room_full.html', {})
         else:
-            html = "<html><body>Sorry, The new room is Full.</body></html>"
-            return HttpResponse(html)
+            return HttpResponseRedirect('/hostel/')
 
 
     else:
         return render(request, 'hostel/change.html', {})
 
-
+@login_required
 def change_request(request):
     #address duplicate requests
 
@@ -232,12 +259,12 @@ def change_request(request):
         else:
             return HttpResponseRedirect('/hostel/')
 
-        return HttpResponse('<html><body> Success! </body></html>')
+        return HttpResponseRedirect('/hostel/success')
 
     else:
         return render(request, 'hostel/change_req.html', {})
 
-
+@login_required
 def swap_request(request):
     #address duplicate requests
 
@@ -246,26 +273,39 @@ def swap_request(request):
         stud2 = request.POST['stud2']
         flag = request.POST['flag']
         reason = request.POST['reason']
-        user = User.objects.get(username=stud2)
-        student2 = Student.objects.get(roll_no=user)
+        try:
+            user = User.objects.get(username=stud2)
+            student2 = Student.objects.get(roll_no=user)
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR, 'Check the Roll Number Again!')
+            return render(request, 'hostel/swap_request.html', {})
+
+
         student1= Student.objects.get(roll_no = request.user)
+        if student2.room is not None:
+            if flag and student2.room.room_no:
+                Swap.objects.create(student1 = student1, student2=student2, reason=reason )
 
-        if flag and student2.room.room_no:
-            Swap.objects.create(student1 = student1, student2=student2, reason=reason )
+            else:
+                return HttpResponseRedirect('/hostel/')
 
+            return render(request, 'hostel/success.html', {})
         else:
             return HttpResponseRedirect('/hostel/')
 
-        return HttpResponse('<html><body> Success! </body></html>')
 
     else:
         return render(request, 'hostel/swap_request.html', {})
 
-
+@login_required
 def swap(request):
     #works for only one swap request, have to make it work for more or have different pages for all requests
 
-    req = Swap.objects.get(id=1)
+    try:
+        req = Swap.objects.get(id=1)
+    except Swap.DoesNotExist:
+        return render(request, 'hostel/swap_req_no.html',{} )
+
     reqs=Swap.objects.all()
 
     stud1=req.student1
@@ -280,19 +320,23 @@ def swap(request):
             stud2.room=room
             stud1.save()
             stud2.save()
-            request.delete()
+            req.delete()
+
+
 
         elif '_decline' in request.POST:
-            request.delete()
+            req.delete()
 
+        return HttpResponseRedirect('/hostel/')
 
     else:
         return render(request, 'hostel/swap.html', {'requests':reqs, })
 
-
+@login_required
 def swap_ack(request):
     #works for only one swap request, have to make it work for more or have different pages for all requests
 
+    user = request.user
     try:
         req = Swap.objects.get(student2=request.user.username)
     except Swap.DoesNotExist:
@@ -300,20 +344,188 @@ def swap_ack(request):
     if request.method == 'POST':
 
         if '_accept' in request.POST:
-            req.accept = 1
+            req.accept = True
             req.save()
 
         if '_decline' in request.POST:
             req.delete()
-        return HttpResponseRedirect('/hostel/')
+        return HttpResponseRedirect('/hostel/success')
     else:
-        return render(request, 'hostel/swap_ack.html', {'request':req, })
+        return render(request, 'hostel/swap_ack.html', {'request':req,'user':user })
+
+@login_required
+def show_requests(request):
+
+    try:
+        swap_req = Swap.objects.all()
+    except Swap.DoesNotExist:
+        swap_req=None
+
+    try:
+        change_req = Change.objects.all()
+    except Change.DoesNotExist:
+        change_req=None
+
+    return render(request, 'hostel/show_requests.html', {'swap_req':swap_req, 'change_req':change_req})
+
+@login_required
+def show_change(request, id,*args, **kwargs ):
+
+
+    try:
+        req = Change.objects.get(id=id)
+    except Change.DoesNotExist:
+        return render(request, 'hostel/swap_req_no.html',{} )
+
+    stud=req.student
+
+    if request.method == 'POST':
+
+        if '_accept' in request.POST:
+            room_no=request.POST['room_no']
+
+            try:
+                stud.room=Room.objects.get(room_no=room_no)
+                stud.save()
+            except ObjectDoesNotExist:
+                messages.add_message(request,messages.ERROR,'Check Room number again!')
+                return render(request, 'hostel/show_change.html', {'change':req,'id':id})
 
 
 
+            req.delete()
 
 
 
+        elif '_decline' in request.POST:
+            req.delete()
+
+        return render(request, 'hostel/success.html',{} )
+
+    else:
+        return render(request, 'hostel/show_change.html', {'change':req,'id':id})
+
+@login_required
+def show_swap(request, id):
+    swap = Swap.objects.get(id=id)
+
+    try:
+        req = Swap.objects.get(id=id)
+    except Swap.DoesNotExist:
+        return render(request, 'hostel/swap_req_no.html',{} )
+
+    stud1=req.student1
+    user=User.objects.get(username=req.student2)
+    stud2=Student.objects.get(roll_no=user)
+
+    if request.method == 'POST':
+
+        if '_accept' in request.POST:
+            room = stud1.room
+            stud1.room=stud2.room
+            stud2.room=room
+            stud1.save()
+            stud2.save()
+            req.delete()
+
+
+
+        elif '_decline' in request.POST:
+            req.delete()
+
+        return HttpResponseRedirect('/hostel/')
+
+    else:
+        return render(request, 'hostel/show_swap.html', {'swap':swap,'id':id, 'stud2':stud2})
+
+
+@login_required
+def read_csv(request):
+    path = r'C:\Users\HP\Documents\GitHub\hostel_management\hostel\test.csv'
+    reader = csv.reader(open(path), delimiter=',', quotechar='"')
+    rows = list(reader)
+    rooms = Room.objects.exclude(vacancy=0)
+    i=0
+
+    for row in rows[1:]:
+        password = row[5]+'password'
+        user = User.objects.create_user(first_name=row[7], last_name=row[8], email=row[9], username=row[5],password=password )
+
+        stud=Student.objects.create(join_year=row[0], gender=row[2], age=row[3], branch=row[4], roll_no=user)
+        Diff.objects.create(user=user, is_student=True)
+        if rooms[i].vacancy == 0:
+            i=i+1
+        if i<len(rooms):
+            stud.room=rooms[i]
+            rooms[i].vacancy-=1
+            stud.save()
+            rooms[i].save()
+
+    return HttpResponseRedirect('/hostel/success')
+
+@login_required
+def deallocate(request):
+    if request.method == 'POST':
+
+        join_year = request.POST['join_year']
+
+        students = Student.objects.filter(join_year=join_year)
+        length = len(students)
+        if length == 0:
+            messages.add_message(request,messages.ERROR,'No Such Batch')
+            return render(request, 'hostel/deallocate.html', {})
+
+        else:
+            for i in range(length):
+                print i
+                if students[i].room is not None:
+                    obj_room = Room.objects.get(room_no=students[i].room.room_no)
+                    obj_room.vacancy = obj_room.capacity
+                    students[i].graduate = True
+                    obj_room.save()
+                    students[i].save()
+                else:
+                    students[i].graduate = True
+                    students[i].save()
+
+            return HttpResponseRedirect('/hostel/')
+
+    else:
+        return render(request, 'hostel/deallocate.html', {})
+
+@login_required
+def create_room(request):
+    path = r'C:\Users\HP\Documents\GitHub\hostel_management\hostel\room.csv'
+    reader = csv.reader(open(path), delimiter=',', quotechar='"')
+    rows = list(reader)
+    for row in rows[1:]:
+       Room.objects.create(room_no=row[0], block_id=row[1], capacity=row[2], vacancy=row[3])
+    return HttpResponseRedirect('/hostel/success')
+
+@login_required
+def show_jugaad(request):
+    HttpResponseRedirect('/hostel/success')
+
+@login_required
+def show_vacant(request):
+    rooms=Room.objects.exclude(vacancy=0)
+
+    return render(request, 'hostel/show_vacancy.html', {'rooms':rooms, })
+@login_required
+def show_students(request):
+    students = Student.objects.all()
+
+    return render(request, 'hostel/show_students.html', {'students':students})
+@login_required
+def handler404(request):
+    response = render_to_response('404.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 404
+    return response
+
+@login_required
+def success(request):
+    return render(request, 'hostel/success.html',{})
 
 
 

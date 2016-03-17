@@ -1,0 +1,15 @@
+Join year,Room,Gender,Age,Branch,Roll Number,Handicaped,First name,Last name,email
+2014,,M,20,,1,0,a,b,ab@xyz.com
+2014,,M,20,,2,0,c,d,cd@xyz.com
+2014,,M,20,,3,0,e,f,ef@xyz.com
+2014,,M,20,,4,0,g,h,gh@xyz.com
+2014,,F,20,,5,0,i,j,ij@xyz.com
+2013,,F,20,,6,0,k,l,kl@xyz.com
+2012,,M,20,,7,0,m,n,mn@xyz.com
+2014,,M,20,,8,0,l,m,lm@xyz.com
+2014,,M,21,,9,0,o,p,op@xyz.com
+2013,,M,21,,10,0,q,r,qr@xyz.com
+2013,,M,21,,11,1,s,t,st@xyz.com
+2012,,M,22,,12,0,u,v,uv@xyz.com
+2012,,F,22,,13,0,w,x,wx@xyz.com
+2012,,F,22,,14,0,y,z,yz@xyz.com

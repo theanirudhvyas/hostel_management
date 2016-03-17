@@ -23,7 +23,7 @@ class Room(models.Model):
 class Student(models.Model):
 
     join_year = models.IntegerField(default=0)
-    room = models.ForeignKey(Room,on_delete=models.CASCADE)
+    room = models.ForeignKey(Room,on_delete=models.CASCADE, null=True)
     gender = models.CharField(max_length = 1)
     age = models.IntegerField(default=0)
     branch = models.CharField(max_length = 50)

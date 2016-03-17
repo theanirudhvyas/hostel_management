@@ -20,7 +20,7 @@ class DiffForm(forms.ModelForm):
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = ('gender', 'age', 'branch', 'handicapped')
+        fields = ('gender', 'age', 'branch','join_year', 'handicapped')
 
 
 class RoomForm(forms.ModelForm):
